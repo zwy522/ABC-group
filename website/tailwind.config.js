@@ -1,5 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-
 export default {
   darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -9,20 +8,16 @@ export default {
     },
     extend: {
       colors: {
-        primary: "#4361ee",
-        "primary-light": "#eef1ff",
-        "primary-dark": "#3a56d4",
-        accent: "#7c3aed",
-        "accent-light": "#f3efff",
-        surface: "#ffffff",
-        "surface-alt": "#f8f9fc",
-        "surface-warm": "#faf9f7",
-        border: "#e5e7eb",
-        "border-light": "#f0f1f3",
-        heading: "#1a1a2e",
+        primary: "#c96442",
+        "primary-light": "#fdf0eb",
+        "primary-dark": "#b5573a",
+        surface: "#faf9f5",
+        "surface-alt": "#f5f2eb",
+        border: "#e8e4db",
+        heading: "#1a1a1a",
         body: "#374151",
-        muted: "#6b7280",
-        "muted-light": "#9ca3af",
+        muted: "#6b6560",
+        "muted-light": "#9a9590",
       },
       fontFamily: {
         serif: ['"Noto Serif SC"', "serif"],
@@ -31,8 +26,7 @@ export default {
       animation: {
         fadeInUp: "fadeInUp 0.6s ease-out forwards",
         "pulse-dot": "pulseDot 3s ease-in-out infinite",
-        "bounce-slow": "bounce 3s ease-in-out infinite",
-        "float": "float 6s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
       },
       keyframes: {
         fadeInUp: {
