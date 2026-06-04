@@ -5,6 +5,8 @@ import { Menu, X } from "lucide-react";
 const navLinks = [
   { to: "/", label: "首页" },
   { to: "/meetings", label: "组会记录" },
+  { to: "/upload", label: "上传资料" },
+  { to: "/admin", label: "管理" },
 ];
 
 export default function Navbar() {
@@ -21,7 +23,6 @@ export default function Navbar() {
           >
             ABC-Group
           </Link>
-
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.to;
@@ -40,7 +41,6 @@ export default function Navbar() {
               );
             })}
           </div>
-
           <button
             className="md:hidden text-[#6b6560] hover:text-[#1a1a1a] transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -49,7 +49,6 @@ export default function Navbar() {
           </button>
         </div>
       </div>
-
       {mobileOpen && (
         <div className="md:hidden border-t border-[#e8e4db] bg-[#faf9f5]/95 backdrop-blur-lg">
           <div className="px-4 py-2 space-y-1">
