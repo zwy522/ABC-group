@@ -7,6 +7,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>ABC-Group 组会资料库</title>
+    <script>
+      // SPA fallback: restore path from query param (set by 404.html)
+      (function(){
+        var q = new URLSearchParams(location.search);
+        var p = q.get('p');
+        if (p) {
+          var u = location.origin + '/ABC-group' + p + location.hash;
+          history.replaceState(null, '', u);
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/ABC-group/assets/index-DwAhpjxL.js"></script>
     <link rel="stylesheet" crossorigin href="/ABC-group/assets/index-DuggfWti.css">
   </head>
