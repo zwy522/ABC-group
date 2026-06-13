@@ -5,6 +5,10 @@ import PaperCard from '@/components/PaperCard';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { discoverMeetings, type MeetingData } from '@/services/github';
 
+function normalizeTitle(t: string): string {
+  return t.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 interface Paper {
   id: string;
   title: string;
@@ -13,6 +17,7 @@ interface Paper {
   keywords: string[];
   pdfUrl: string;
   pptxUrls: { label: string; url: string }[];
+  mdUrls?: { label: string; url: string; repoPath: string }[];
 }
 
 interface Meeting {
@@ -52,6 +57,7 @@ function TimelineNode({ meeting, index }: { meeting: Meeting | MeetingData; inde
               keywords={paper.keywords}
               pdfUrl={paper.pdfUrl}
               pptxUrls={paper.pptxUrls}
+              mdUrls={paper.mdUrls}
             />
           ))}
         </div>
@@ -62,17 +68,73 @@ function TimelineNode({ meeting, index }: { meeting: Meeting | MeetingData; inde
 
 export default function Meetings() {
   const [filter, setFilter] = useState('');
-  const [liveMeetings, setLiveMeetings] = useState<MeetingData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [useLiveData, setUseLiveData] = useState(false);
+  const [liveMeetings, setLiveMeetings] = useState<MeetingData[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
-  // 静态数据
   const staticMeetings: Meeting[] = [...meetingsData.meetings].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // 当前使用的数据
-  const currentMeetings = useLiveData ? liveMeetings : staticMeetings;
+  // Build metadata lookup from static meetings.json
+  const staticMeta = new Map<string, { presenter: string; venue: string; keywords: string[] }>();
+  for (const m of staticMeetings) {
+    for (const p of m.papers) {
+      staticMeta.set(normalizeTitle(p.title), { presenter: p.presenter, venue: p.venue, keywords: p.keywords });
+    }
+  }
+
+  // Merge live data with static metadata
+  const enriched = (liveMeetings ?? []).map((m) => ({
+    ...m,
+    papers: m.papers.map((p) => {
+      const key = normalizeTitle(p.title);
+      const meta = staticMeta.get(key);
+      if (meta) {
+        return { ...p, presenter: meta.presenter, venue: meta.venue, keywords: meta.keywords };
+      }
+      return p;
+    }),
+  }));
+
+  const currentMeetings = (liveMeetings && liveMeetings.length > 0)
+    ? enriched
+    : staticMeetings;
+
+  const sync = async () => {
+    setSyncing(true);
+    try {
+      const meetings = await discoverMeetings();
+      console.log("[Meetings sync] got", meetings.length, "meetings");
+      if (meetings.length > 0) {
+        setLiveMeetings(meetings);
+      }
+    } catch (err) {
+      console.error("[Meetings sync] error:", err);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    const doSync = async () => {
+      setLoading(true);
+      try {
+        const meetings = await discoverMeetings();
+        console.log("[Meetings init] got", meetings.length, "meetings");
+        if (meetings.length > 0) {
+          setLiveMeetings(meetings);
+        } else {
+          setLiveMeetings(null);
+        }
+      } catch {
+        setLiveMeetings(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    doSync();
+  }, []);
 
   const filtered = filter.trim()
     ? currentMeetings
@@ -82,6 +144,7 @@ export default function Meetings() {
             (p) =>
               p.title.toLowerCase().includes(filter.toLowerCase()) ||
               p.presenter.toLowerCase().includes(filter.toLowerCase()) ||
+              (p.venue && p.venue.toLowerCase().includes(filter.toLowerCase())) ||
               p.keywords.some((k) =>
                 k.toLowerCase().includes(filter.toLowerCase())
               )
@@ -89,26 +152,6 @@ export default function Meetings() {
         }))
         .filter((m) => m.papers.length > 0)
     : currentMeetings;
-
-  // 从 GitHub 自动同步
-  const handleSync = async () => {
-    setLoading(true);
-    try {
-      const meetings = await discoverMeetings();
-      setLiveMeetings(meetings);
-      setUseLiveData(true);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 切换回静态数据
-  const handleReset = () => {
-    setUseLiveData(false);
-    setLiveMeetings([]);
-  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -139,37 +182,43 @@ export default function Meetings() {
             className="w-full rounded-xl border border-[#e8e4db] bg-white py-2.5 pl-10 pr-4 text-sm text-[#1a1a1a] placeholder-[#9a9590] outline-none transition-all focus:border-[#c96442]/40 focus:ring-2 focus:ring-[#c96442]/10 shadow-sm"
           />
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleSync}
-            disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#c96442] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#b5573a] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <RefreshCw size={16} />
-            )}
-            {loading ? "同步中..." : "从 GitHub 同步"}
-          </button>
-          {useLiveData && (
-            <button
-              onClick={handleReset}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#e8e4db] bg-white px-4 py-2.5 text-sm font-medium text-[#6b6560] transition-all hover:bg-[#f0ece4]"
-            >
-              恢复默认
-            </button>
+        <button
+          onClick={sync}
+          disabled={syncing}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#c96442] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#b5573a] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {syncing ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <RefreshCw size={16} />
           )}
-        </div>
+          {syncing ? "刷新中..." : "刷新数据"}
+        </button>
       </div>
 
-      {useLiveData && (
-        <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+      {liveMeetings && (
+        <div className="mb-6 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 flex items-center gap-2">
+          <RefreshCw size={14} className="shrink-0" />
           已从 GitHub 仓库自动同步 {liveMeetings.length} 期组会数据（实时读取仓库文件夹结构）
         </div>
       )}
+      {!liveMeetings && !loading && (
+        <div className="mb-6 rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-700 flex items-center gap-2">
+          使用本地缓存数据，可点击"刷新数据"从 GitHub 同步
+        </div>
+      )}
+      {filter.trim() && !loading && (
+        <div className="mb-6 text-sm text-[#6b6560]">
+          搜索 <span className="font-semibold text-[#c96442]">"{filter}"</span>，共找到 {filtered.reduce((sum, m) => sum + m.papers.length, 0)} 篇论文
+        </div>
+      )}
 
-      {filtered.length > 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-[#9a9590]">
+          <Loader2 size={24} className="animate-spin mr-2" />
+          <span className="text-sm">正在同步 GitHub 仓库数据...</span>
+        </div>
+      ) : filtered.length > 0 ? (
         <div className="relative">
           {filtered.map((meeting, idx) => (
             <TimelineNode key={meeting.id} meeting={meeting} index={idx} />
