@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Upload as UploadIcon, FileUp, CheckCircle, AlertCircle, Loader2, Link as LinkIcon } from "lucide-react";
+import { Upload as UploadIcon, FileUp, CheckCircle, AlertCircle, Loader2, Link as LinkIcon, FileText } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
-import { uploadFile, fileToBase64, validateToken } from "@/services/github";
+import {
+  uploadFile, fileToBase64, validateToken, syncMeetingsAfterUpload,
+} from "@/services/github";
 
 interface UploadStatus {
   type: "success" | "error" | "info";
@@ -19,6 +21,7 @@ export default function Upload() {
   const [keywords, setKeywords] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pptxFiles, setPptxFiles] = useState<File[]>([]);
+  const [mdFiles, setMdFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<UploadStatus | null>(null);
 
@@ -51,8 +54,8 @@ export default function Upload() {
       setStatus({ type: "error", message: "请填写组会日期和论文标题" });
       return;
     }
-    if (!pdfFile && pptxFiles.length === 0) {
-      setStatus({ type: "error", message: "请至少上传一个文件（PDF 或 PPTX）" });
+    if (!pdfFile && pptxFiles.length === 0 && mdFiles.length === 0) {
+      setStatus({ type: "error", message: "请至少上传一个文件（PDF、PPTX 或 Markdown）" });
       return;
     }
 
@@ -81,10 +84,49 @@ export default function Upload() {
         uploadedFiles.push(pptx.name);
       }
 
+      // 上传 Markdown
+      for (const md of mdFiles) {
+        const mdBase64 = await fileToBase64(md);
+        const mdPath = `${folderName}/${md.name}`;
+        await uploadFile(token, mdPath, mdBase64, `feat: 添加笔记 ${paperTitle}`);
+        uploadedFiles.push(md.name);
+      }
+
       setStatus({
         type: "success",
-        message: `上传成功！已上传 ${uploadedFiles.length} 个文件到 ${folderName}/ 文件夹：${uploadedFiles.join(", ")}`,
+        message: `上传成功！已上传 ${uploadedFiles.length} 个文件到 ${folderName}/ 文件夹。正在更新组会记录...`,
       });
+
+      // 自动更新 meetings.json
+      const rawBase = `https://github.com/zwy522/ABC-group/raw/main/${folderName}`;
+      try {
+        await syncMeetingsAfterUpload(token, folderName, {
+          title: paperTitle,
+          venue: venue || "",
+          presenter: presenter || "",
+          keywords: keywords ? keywords.split(/[,，]/).map((k) => k.trim()).filter(Boolean) : [],
+          pdfUrl: pdfFile ? `${rawBase}/${encodeURIComponent(pdfFile.name)}` : "",
+          pptxUrls: pptxFiles.map((f) => ({
+            label: f.name.replace(/\.(pptx|PPTX)$/i, "").replace(/_/g, " ").trim(),
+            url: `${rawBase}/${encodeURIComponent(f.name)}`,
+          })),
+          mdUrls: mdFiles.map((f) => ({
+            label: f.name.replace(/\.(md|MD)$/i, ""),
+            url: `${rawBase}/${encodeURIComponent(f.name)}`,
+            repoPath: `${folderName}/${f.name}`,
+          })),
+        });
+        setStatus({
+          type: "success",
+          message: `上传成功！已上传 ${uploadedFiles.length} 个文件到 ${folderName}/ 文件夹，并自动更新组会记录。`,
+        });
+      } catch (syncErr) {
+        console.error("syncMeetingsAfterUpload failed:", syncErr);
+        setStatus({
+          type: "success",
+          message: `上传成功！已上传 ${uploadedFiles.length} 个文件到 ${folderName}/ 文件夹。（组会记录自动更新失败，请手动补充）`,
+        });
+      }
 
       // 清空表单
       setPaperTitle("");
@@ -93,6 +135,7 @@ export default function Upload() {
       setKeywords("");
       setPdfFile(null);
       setPptxFiles([]);
+      setMdFiles([]);
     } catch (err) {
       setStatus({
         type: "error",
@@ -258,6 +301,28 @@ export default function Upload() {
             {pptxFiles.length > 0 && (
               <div className="mt-2 space-y-1">
                 {pptxFiles.map((f, i) => (
+                  <p key={i} className="text-xs text-[#6b6560]">
+                    {f.name} ({(f.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+              <FileText size={14} className="inline mr-1 text-[#c96442]" />
+              笔记 Markdown（可多选）
+            </label>
+            <input
+              type="file"
+              accept=".md,.markdown"
+              multiple
+              onChange={(e) => setMdFiles(Array.from(e.target.files || []))}
+              className="w-full text-sm text-[#6b6560] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#7c6f5b]/10 file:text-[#7c6f5b] hover:file:bg-[#7c6f5b]/20 file:cursor-pointer file:transition-colors"
+            />
+            {mdFiles.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {mdFiles.map((f, i) => (
                   <p key={i} className="text-xs text-[#6b6560]">
                     {f.name} ({(f.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
