@@ -70,9 +70,9 @@
         {
           "id": "2026.6.13-XtraMAC",
           "title": "XtraMAC",
-          "venue": "",
-          "presenter": "",
-          "keywords": [],
+          "venue": "ISCA 2026",
+          "presenter": "张文元",
+          "keywords": ["MAC 架构", "混合精度运算", "运行时数据类型切换", "DSP 打包", "FPGA"],
           "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.6.13/XtraMAC.pdf",
           "pptxUrls": [
             { "label": "XtraMAC", "url": "https://github.com/zwy522/ABC-group/raw/main/2026.6.13/XtraMAC.pptx" }
