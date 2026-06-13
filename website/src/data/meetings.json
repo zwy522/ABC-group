@@ -1,23 +1,39 @@
 {
   "meetings": [
     {
-      "id": "2026.6.13",
-      "date": "2026-06-13",
-      "folderName": "2026.6.13",
-      "title": "第 4 期组会",
+      "id": "2026.5.23",
+      "date": "2026-05-23",
+      "title": "第 1 期组会",
       "papers": [
         {
-          "id": "2026.6.13-XtraMAC.pdf",
-          "title": "XtraMAC",
-          "venue": "",
-          "presenter": "",
-          "keywords": [],
-          "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.6.13/XtraMAC.pdf",
+          "id": "2026.5.23-LiLo",
+          "title": "LiLo: Harnessing the on-Chip Accelerators in Intel CPUs for Compressed LLM Inference Acceleration",
+          "venue": "HPCA 2026",
+          "presenter": "许世豪",
+          "keywords": ["CPU 端加速", "LLM 推理", "模型压缩", "Intel CPU 片上加速器"],
+          "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.5.23/LiLo_Harnessing_the_on-Chip_Accelerators_in_Intel_CPUs_for_Compressed_LLM_Inference_Acceleration.pdf",
           "pptxUrls": [
-            {
-              "label": "XtraMAC",
-              "url": "https://github.com/zwy522/ABC-group/raw/main/2026.6.13/XtraMAC.pptx"
-            }
+            { "label": "LiLo HPCA 2026", "url": "https://github.com/zwy522/ABC-group/raw/main/2026.5.23/LILo%20HPCA%202026.pptx" },
+            { "label": "HPCA LiLo Extended", "url": "https://github.com/zwy522/ABC-group/raw/main/2026.5.23/HPCA_LILo_extended.pptx" }
+          ],
+          "mdUrls": []
+        }
+      ]
+    },
+    {
+      "id": "2026.5.30",
+      "date": "2026-05-30",
+      "title": "第 2 期组会",
+      "papers": [
+        {
+          "id": "2026.5.30-BitDecoding",
+          "title": "BitDecoding: Unlocking Tensor Cores for Long-Context LLMs with Low-Bit KV Cache",
+          "venue": "",
+          "presenter": "张文元",
+          "keywords": ["LLM 推理加速", "低比特量化", "KV Cache 压缩", "Tensor Core"],
+          "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.5.30/BitDecoding%20Unlocking%20Tensor%20Cores%20forLong-Context%20LLMs%20with%20Low-Bit%20KV%20Cache.pdf",
+          "pptxUrls": [
+            { "label": "BitDecoding PPT", "url": "https://github.com/zwy522/ABC-group/raw/main/2026.5.30/BitDecoding_PPT.pptx" }
           ],
           "mdUrls": []
         }
@@ -26,7 +42,6 @@
     {
       "id": "2026.6.6",
       "date": "2026-06-06",
-      "folderName": "2026.6.6",
       "title": "第 3 期组会",
       "papers": [
         {
@@ -48,60 +63,19 @@
       ]
     },
     {
-      "id": "2026.5.30",
-      "date": "2026-05-30",
-      "folderName": "2026.5.30",
-      "title": "第 2 期组会",
+      "id": "2026.6.13",
+      "date": "2026-06-13",
+      "title": "第 4 期组会",
       "papers": [
         {
-          "id": "2026.5.30-BitDecoding Unlocking Tensor Cores forLong-Context LLMs with Low-Bit KV Cache.pdf",
-          "title": "BitDecoding Unlocking Tensor Cores forLong-Context LLMs with Low-Bit KV Cache",
+          "id": "2026.6.13-XtraMAC",
+          "title": "XtraMAC",
           "venue": "",
-          "presenter": "张文元",
-          "keywords": [
-            "LLM 推理加速",
-            "低比特量化",
-            "KV Cache 压缩",
-            "Tensor Core"
-          ],
-          "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.5.30/BitDecoding%20Unlocking%20Tensor%20Cores%20forLong-Context%20LLMs%20with%20Low-Bit%20KV%20Cache.pdf",
+          "presenter": "",
+          "keywords": [],
+          "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.6.13/XtraMAC.pdf",
           "pptxUrls": [
-            {
-              "label": "BitDecoding",
-              "url": "https://github.com/zwy522/ABC-group/raw/main/2026.5.30/BitDecoding_PPT.pptx"
-            }
-          ],
-          "mdUrls": []
-        }
-      ]
-    },
-    {
-      "id": "2026.5.23",
-      "date": "2026-05-23",
-      "folderName": "2026.5.23",
-      "title": "第 1 期组会",
-      "papers": [
-        {
-          "id": "2026.5.23-LiLo_Harnessing_the_on-Chip_Accelerators_in_Intel_CPUs_for_Compressed_LLM_Inference_Acceleration.pdf",
-          "title": "LiLo Harnessing the on-Chip Accelerators in Intel CPUs for Compressed LLM Inference Acceleration",
-          "venue": "HPCA 2026",
-          "presenter": "许世豪",
-          "keywords": [
-            "CPU 端加速",
-            "LLM 推理",
-            "模型压缩",
-            "Intel CPU 片上加速器"
-          ],
-          "pdfUrl": "https://github.com/zwy522/ABC-group/raw/main/2026.5.23/LiLo_Harnessing_the_on-Chip_Accelerators_in_Intel_CPUs_for_Compressed_LLM_Inference_Acceleration.pdf",
-          "pptxUrls": [
-            {
-              "label": "HPCA LILo extended",
-              "url": "https://github.com/zwy522/ABC-group/raw/main/2026.5.23/HPCA_LILo_extended.pptx"
-            },
-            {
-              "label": "LILo HPCA 2026",
-              "url": "https://github.com/zwy522/ABC-group/raw/main/2026.5.23/LILo%20HPCA%202026.pptx"
-            }
+            { "label": "XtraMAC", "url": "https://github.com/zwy522/ABC-group/raw/main/2026.6.13/XtraMAC.pptx" }
           ],
           "mdUrls": []
         }
