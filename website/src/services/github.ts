@@ -216,6 +216,84 @@ export async function uploadFile(
   return { sha: data.content.sha, url: data.content.html_url };
 }
 
+// 获取仓库中的 meetings.json（含 sha 用于后续更新）
+async function fetchMeetingsJson(token: string): Promise<{ sha: string; meetings: { id: string; date: string; title: string; papers: PaperData[] }[] } | null> {
+  try {
+    const url = `${API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/contents/website/src/data/meetings.json?ref=main`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.content || json.encoding !== "base64") return null;
+    const raw = atob(json.content.replace(/\n/g, ""));
+    const bytes = Uint8Array.from(raw, (c: string) => c.charCodeAt(0));
+    const text = new TextDecoder("utf-8").decode(bytes);
+    const data = JSON.parse(text);
+    return { sha: json.sha, meetings: data.meetings ?? [] };
+  } catch { return null; }
+}
+
+async function writeMeetingsJson(token: string, meetings: unknown[], sha: string): Promise<boolean> {
+  const url = `${API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/contents/website/src/data/meetings.json`;
+  const content = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify({ meetings }, null, 2))));
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "docs: 自动更新组会数据", content, branch: "main", sha }),
+  });
+  return res.ok;
+}
+
+// 上传后自动同步 meetings.json：合并新论文/新组会
+export async function syncMeetingsAfterUpload(
+  token: string,
+  folderName: string,
+  paper: { title: string; venue: string; presenter: string; keywords: string[]; pdfUrl: string; pptxUrls: { label: string; url: string }[]; mdUrls: { label: string; url: string; repoPath: string }[] }
+): Promise<boolean> {
+  const current = await fetchMeetingsJson(token);
+  if (!current) return false;
+
+  const date = parseFolderDate(folderName);
+  if (!date) return false;
+
+  const newPaper: PaperData = {
+    id: `${folderName}-${paper.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, "")}`,
+    title: paper.title,
+    venue: paper.venue,
+    presenter: paper.presenter,
+    keywords: paper.keywords,
+    pdfUrl: paper.pdfUrl,
+    pptxUrls: paper.pptxUrls,
+    mdUrls: paper.mdUrls,
+  };
+
+  const meetings = [...current.meetings];
+  const existingIdx = meetings.findIndex((m) => m.id === folderName);
+
+  if (existingIdx >= 0) {
+    // 已有组会 → 追加论文（或覆盖同标题）
+    const papers = [...meetings[existingIdx].papers];
+    const paperIdx = papers.findIndex((p) => p.title === paper.title);
+    if (paperIdx >= 0) {
+      papers[paperIdx] = newPaper;
+    } else {
+      papers.push(newPaper);
+    }
+    meetings[existingIdx] = { ...meetings[existingIdx], papers };
+  } else {
+    // 新组会 → 创建条目
+    meetings.push({
+      id: folderName,
+      date,
+      title: `第 ${meetings.length + 1} 期组会`,
+      papers: [newPaper],
+    });
+  }
+
+  return writeMeetingsJson(token, meetings, current.sha);
+}
+
 export async function getMeetingsJsonSha(): Promise<string | null> {
   try {
     const res = await fetch(`${API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/contents/website/src/data/meetings.json`);
